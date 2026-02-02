@@ -1,0 +1,40 @@
+@page "/transactions"
+@using Microsoft.AspNetCore.Authorization
+@using Verity.Web.Components
+@using Verity.Web.DTOs
+@using Verity.Web.Services
+@attribute [Authorize]
+@inject TransactionService TransactionService
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="display-6 fw-bold text-dark mb-1">Extrato de Lançamentos</h1>
+        <p class="text-muted mb-0">Histórico recente de movimentações</p>
+    </div>
+    <a href="transactions/create" class="btn btn-primary btn-lg shadow-sm px-4">
+        <span class="bi bi-plus-lg me-2"></span> Novo Lançamento
+    </a>
+</div>
+
+<div class="card shadow border-0 mb-4">
+    <div class="card-body p-0">
+        <TransactionTable Transactions="@transactions" IsLoading="@isLoading" />
+    </div>
+</div>
+
+@code {
+    private IEnumerable<TransactionResponse> transactions = new List<TransactionResponse>();
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try 
+        {
+            transactions = await TransactionService.GetRecentTransactionsAsync();
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}

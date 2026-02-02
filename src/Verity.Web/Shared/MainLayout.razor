@@ -1,0 +1,40 @@
+@inherits LayoutComponentBase
+@using Microsoft.AspNetCore.Components.Authorization
+@using Verity.Web.Shared
+@inject NavigationManager NavigationManager
+
+<PageTitle>Verity.Web</PageTitle>
+
+<div class="page">
+    <div class="sidebar">
+        <NavMenu />
+    </div>
+
+    <main>
+        <header class="d-flex justify-content-between align-items-center mb-5 pb-3 border-bottom">
+            <div>
+            </div>
+
+            <div class="user-menu d-flex align-items-center gap-3">
+                 <AuthorizeView>
+                     <Authorized>
+                         <div class="d-flex flex-column text-end me-2">
+                             <span class="fw-bold text-dark small">@context.User.Identity?.Name</span>
+                             <span class="text-muted small">Usuário</span>
+                         </div>
+                         <div class="avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; font-weight: bold;">
+                             @(context.User.Identity?.Name?.Substring(0, 1).ToUpper() ?? "U")
+                         </div>
+                     </Authorized>
+                     <NotAuthorized>
+                         <a href="authentication/login" class="btn btn-sm btn-outline-primary">Entrar</a>
+                     </NotAuthorized>
+                 </AuthorizeView>
+            </div>
+        </header>
+
+        <article class="content">
+            @Body
+        </article>
+    </main>
+</div>

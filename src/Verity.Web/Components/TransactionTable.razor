@@ -1,0 +1,62 @@
+@using Verity.Contracts
+@using Verity.Web.DTOs
+
+@if (IsLoading)
+{
+    <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="mt-2 text-muted">Carregando transações...</p>
+    </div>
+}
+else if (Transactions == null || !Transactions.Any())
+{
+    <div class="alert alert-light text-center border" role="alert">
+        Nenhuma transação encontrada.
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0 modern-table">
+            <thead class="bg-light">
+                <tr>
+                    <th scope="col" class="ps-4 text-uppercase text-muted small fw-bold border-bottom-0 py-3">Data</th>
+                    <th scope="col" class="text-uppercase text-muted small fw-bold border-bottom-0 py-3">Descrição</th>
+                    <th scope="col" class="text-uppercase text-muted small fw-bold border-bottom-0 py-3">Tipo</th>
+                    <th scope="col" class="text-end pe-4 text-uppercase text-muted small fw-bold border-bottom-0 py-3">Valor</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var transaction in Transactions)
+                {
+                    <tr>
+                        <td class="ps-4 py-3 fw-medium text-dark">@transaction.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                        <td class="py-3 text-secondary">@transaction.Description</td>
+                        <td class="py-3">
+                            @if (transaction.Type == TransactionType.Credit)
+                            {
+                                <span class="badge rounded-pill bg-success bg-opacity-10 text-success border border-success border-opacity-10 px-3 py-2">
+                                    <span class="bi bi-arrow-up me-1"></span> Crédito
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge rounded-pill bg-danger bg-opacity-10 text-danger border border-danger border-opacity-10 px-3 py-2">
+                                    <span class="bi bi-arrow-down me-1"></span> Débito
+                                </span>
+                            }
+                        </td>
+                        <td class="text-end pe-4 py-3 fw-bold @(transaction.Type == TransactionType.Credit ? "text-success" : "text-danger")">
+                            @transaction.Amount.ToString("C")
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    [Parameter] public IEnumerable<TransactionResponse>? Transactions { get; set; }
+    [Parameter] public bool IsLoading { get; set; } = false;
+}

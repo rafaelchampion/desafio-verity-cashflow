@@ -1,0 +1,22 @@
+<div class="card h-100 p-4 d-flex flex-column justify-content-center">
+    <h6 class="text-uppercase text-muted small fw-bold mb-3 tracking-wide">@Title</h6>
+    
+    @if (IsLoading)
+    {
+        <div class="d-flex align-items-center">
+            <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+            <span class="text-muted small">Carregando...</span>
+        </div>
+    }
+    else
+    {
+        <h2 class="display-6 fw-bold mb-0 @ValueColorClass" style="font-family: var(--font-heading);">@Value</h2>
+    }
+</div>
+
+@code {
+    [Parameter] public string Title { get; set; } = "Título";
+    [Parameter] public string Value { get; set; } = "R$ 0,00";
+    [Parameter] public bool IsLoading { get; set; } = false;
+    [Parameter] public string ValueColorClass { get; set; } = "text-dark";
+}

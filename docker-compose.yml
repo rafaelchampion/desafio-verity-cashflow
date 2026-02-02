@@ -1,0 +1,125 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: verity_postgres
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: "Verity@123"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    networks:
+      - verity-network
+    restart: always
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U admin" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: verity_rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    networks:
+      - verity-network
+    restart: always
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+  cashflow:
+    build:
+      context: .
+      dockerfile: src/Verity.CashFlow.API/Dockerfile
+    container_name: verity_cashflow
+    ports:
+      - "5002:8080"
+    environment:
+      - ConnectionStrings__DefaultConnection=Host=verity_postgres;Port=5432;Database=verity_cashflow;Username=admin;Password=Verity@123
+      - ConnectionStrings__RabbitMq=amqp://guest:guest@verity_rabbitmq:5672
+      - Jwt__Key=Verity_CashFlow_Challenge_Secret_Key_For_Jwt_Token_Generation_Must_Be_Long_Enough
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - verity-network
+
+  consolidated:
+    build:
+      context: .
+      dockerfile: src/Verity.Consolidated.API/Dockerfile
+    container_name: verity_consolidated
+    ports:
+      - "5003:8080"
+    environment:
+      - ConnectionStrings__DefaultConnection=Host=verity_postgres;Port=5432;Database=verity_consolidated;Username=admin;Password=Verity@123
+      - ConnectionStrings__RabbitMq=amqp://guest:guest@verity_rabbitmq:5672
+      - Jwt__Key=Verity_CashFlow_Challenge_Secret_Key_For_Jwt_Token_Generation_Must_Be_Long_Enough
+      - Jwt__Authority=http://verity_keycloak:8080/realms/verity
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - verity-network
+
+  web:
+    build:
+      context: .
+      dockerfile: src/Verity.Web/Dockerfile
+    container_name: verity_web
+    ports:
+      - "8080:80"
+    networks:
+      - verity-network
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:23.0.0
+    container_name: verity_keycloak
+    command: start-dev --import-realm
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/verity_keycloak
+      KC_DB_USERNAME: admin
+      KC_DB_PASSWORD: "Verity@123"
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_HOSTNAME: localhost
+      KC_HOSTNAME_PORT: 8180
+      KC_HOSTNAME_STRICT: "false"
+      KC_HOSTNAME_STRICT_HTTPS: "false"
+      KC_HOSTNAME_STRICT_BACKCHANNEL: "false"
+      KC_HTTP_ENABLED: "true"
+    volumes:
+      - ./docs/keycloak-realm.json:/opt/keycloak/data/import/realm.json
+      - ./themes/verity:/opt/keycloak/themes/verity
+    ports:
+      - "8180:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - verity-network
+
+volumes:
+  postgres_data:
+
+
+networks:
+  verity-network:
+    driver: bridge

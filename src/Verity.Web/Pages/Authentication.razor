@@ -1,0 +1,57 @@
+@page "/authentication/{action}"
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@using Microsoft.AspNetCore.Components
+@inject NavigationManager Navigation
+
+<RemoteAuthenticatorView Action="@Action" OnLogInSucceeded="OnLoginSucceeded" OnLogOutSucceeded="OnLogoutSucceeded">
+    <LoggingIn>
+        <div class="d-flex justify-content-center align-items-center" style="min-height: 200px;">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Entrando...</span>
+            </div>
+        </div>
+    </LoggingIn>
+    <CompletingLoggingIn>
+        <div class="d-flex justify-content-center align-items-center" style="min-height: 200px;">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Completando login...</span>
+            </div>
+        </div>
+    </CompletingLoggingIn>
+    <LogInFailed>
+        <Verity.Web.Shared.RedirectToHome />
+    </LogInFailed>
+    <LogOut>
+        <div class="d-flex justify-content-center align-items-center" style="min-height: 200px;">
+            <div class="spinner-border text-secondary" role="status">
+                <span class="visually-hidden">Saindo...</span>
+            </div>
+        </div>
+    </LogOut>
+    <CompletingLogOut>
+        <div class="d-flex justify-content-center align-items-center" style="min-height: 200px;">
+            <div class="spinner-border text-secondary" role="status">
+                <span class="visually-hidden">Completando logout...</span>
+            </div>
+        </div>
+    </CompletingLogOut>
+    <LogOutSucceeded>
+    </LogOutSucceeded>
+    <LogOutFailed>
+        <Verity.Web.Shared.RedirectToHome />
+    </LogOutFailed>
+</RemoteAuthenticatorView>
+
+@code {
+    [Parameter] public string? Action { get; set; }
+
+    private void OnLoginSucceeded()
+    {
+        Navigation.NavigateTo("/dashboard");
+    }
+
+    private void OnLogoutSucceeded()
+    {
+        Navigation.NavigateTo("/");
+    }
+}

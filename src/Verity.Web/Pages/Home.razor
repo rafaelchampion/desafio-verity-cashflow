@@ -1,0 +1,115 @@
+@page "/dashboard"
+@using Microsoft.AspNetCore.Authorization
+@using Verity.Web.DTOs
+@using System.Net.Http
+@using System.Net.Http.Json
+
+@attribute [Authorize]
+@inject IHttpClientFactory HttpClientFactory
+
+<PageTitle>Dashboard - Verity CashFlow</PageTitle>
+
+<div class="mb-4">
+    <h1 class="display-6 fw-bold text-dark mb-2">Painel de Controle</h1>
+    <p class="text-muted">Resumo consolidado do dia <span class="fw-semibold">@DateTime.Now.ToString("dd/MM/yyyy")</span></p>
+</div>
+
+@if (loadingReport)
+{
+    <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="text-muted mt-3">Carregando dados...</p>
+    </div>
+}
+else
+{
+    <div class="row g-4 mb-5">
+        <!-- CRÉDITOS -->
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100 kpi-card bg-white">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="icon-circle bg-success bg-opacity-10 text-success me-3">
+                            <span class="bi bi-arrow-up-circle-fill" style="font-size: 1.5rem;"></span>
+                        </div>
+                        <h6 class="text-uppercase text-muted fw-bold small mb-0 letter-spacing-1">Total Créditos</h6>
+                    </div>
+                    <h2 class="display-5 fw-bold text-success mb-0">@((dailyBalance?.TotalCredit ?? 0).ToString("C"))</h2>
+                </div>
+            </div>
+        </div>
+
+        <!-- DÉBITOS -->
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100 kpi-card bg-white">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="icon-circle bg-danger bg-opacity-10 text-danger me-3">
+                            <span class="bi bi-arrow-down-circle-fill" style="font-size: 1.5rem;"></span>
+                        </div>
+                        <h6 class="text-uppercase text-muted fw-bold small mb-0 letter-spacing-1">Total Débitos</h6>
+                    </div>
+                    <h2 class="display-5 fw-bold text-danger mb-0">@((dailyBalance?.TotalDebit ?? 0).ToString("C"))</h2>
+                </div>
+            </div>
+        </div>
+
+        <!-- SALDO -->
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100 kpi-card bg-gradient-primary text-white" style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="icon-circle bg-white bg-opacity-20 text-white me-3">
+                            <span class="bi bi-calculator" style="font-size: 1.5rem;"></span>
+                        </div>
+                        <h6 class="text-uppercase text-white-50 fw-bold small mb-0 letter-spacing-1">Saldo Final</h6>
+                    </div>
+                    <h2 class="display-5 fw-bold text-white mb-0">@((dailyBalance?.ClosingBalance ?? 0).ToString("C"))</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private DailyBalanceDto? dailyBalance;
+    private bool loadingReport = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadReport();
+    }
+
+    private async Task LoadReport()
+    {
+        loadingReport = true;
+        try
+        {
+            var client = HttpClientFactory.CreateClient("ConsolidatedAPI");
+            var reportResponse = await client.GetAsync($"api/report/daily?date={DateTime.Now:yyyy-MM-dd}");
+            if (reportResponse.IsSuccessStatusCode)
+            {
+                dailyBalance = await reportResponse.Content.ReadFromJsonAsync<DailyBalanceDto>();
+            }
+            else
+            {
+                dailyBalance = new DailyBalanceDto();
+            }
+        }
+        catch (Exception)
+        {
+            dailyBalance = new DailyBalanceDto();
+        }
+        finally
+        {
+            loadingReport = false;
+        }
+    }
+
+    public class DailyBalanceDto
+    {
+        public decimal TotalCredit { get; set; }
+        public decimal TotalDebit { get; set; }
+        public decimal ClosingBalance { get; set; }
+    }
+}

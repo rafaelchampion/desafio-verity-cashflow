@@ -1,0 +1,6 @@
+@Verity.Consolidated.API_HostAddress = http://localhost:5098
+
+GET {{Verity.Consolidated.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
