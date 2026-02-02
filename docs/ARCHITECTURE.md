@@ -12,30 +12,30 @@ graph TD
     Client[Frontend Blazor WebAssembly]
 
     subgraph "Cluster Docker / Nuvem"
-        IdentityAPI[Identity Service API]
-        CashFlowAPI[CashFlow Service API]
-        ConsolidatedAPI[Consolidated Service API]
-        Worker[Consolidated Worker]
+        Keycloak[Keycloak - Servidor de Identidade]
+        CashFlowAPI[API do Serviço de Fluxo de Caixa]
+        ConsolidatedAPI[API do Serviço Consolidado]
+        Worker[Worker do Serviço Consolidado]
 
-        DB_Auth[(PostgreSQL - Auth)]
-        DB_CashFlow[(PostgreSQL - CashFlow)]
-        DB_Consolidated[(PostgreSQL - Consolidated)]
+        DB_CashFlow[(PostgreSQL - Fluxo de Caixa)]
+        DB_Consolidated[(PostgreSQL - Consolidado)]
 
         MessageBroker{RabbitMQ}
     end
 
     User -->|HTTPS| Client
-    Client -->|HTTPS/REST| IdentityAPI
+    Client -->|OIDC/OAuth2| Keycloak
     Client -->|HTTPS/REST| CashFlowAPI
     Client -->|HTTPS/REST| ConsolidatedAPI
 
-    IdentityAPI --> DB_Auth
+    Keycloak -->|Valida Token JWT| CashFlowAPI
+    Keycloak -->|Valida Token JWT| ConsolidatedAPI
     CashFlowAPI --> DB_CashFlow
-    CashFlowAPI -->|Publishes TransactionCreated| MessageBroker
+    CashFlowAPI -->|Publica TransactionCreated| MessageBroker
 
-    MessageBroker -->|Consumes TransactionCreated| Worker
-    Worker -->|Updates Balance| DB_Consolidated
-    ConsolidatedAPI -->|Reads Balance| DB_Consolidated
+    MessageBroker -->|Consome TransactionCreated| Worker
+    Worker -->|Atualiza Saldo| DB_Consolidated
+    ConsolidatedAPI -->|Lê Saldo| DB_Consolidated
 ```
 
 ## Padrões Adotados
