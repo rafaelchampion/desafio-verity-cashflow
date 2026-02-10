@@ -23,13 +23,17 @@ Atualmente rodamos PostgreSQL em containers.
     - Uma instância RDS robusta.
     - Criação de bases lógicas separadas (`auth_db`, `cashflow_db`, `consolidated_db`) dentro da mesma instância ou instâncias separadas dependendo da carga.
 
-## 3. Mensageria
+## 3. Mensageria e Cache
 
-Atualmente rodamos RabbitMQ em container.
+Atualmente rodamos RabbitMQ e Redis em containers.
 
-**AWS Target: Amazon MQ for RabbitMQ**
+**Mensageria: Amazon MQ for RabbitMQ**
 - **Por que?**: Serviço gerenciado compatível com RabbitMQ. Não exige mudança de código no MassTransit (apenas connection string).
 - **Alternativa**: Migrar para **Amazon SQS/SNS**.
+
+**Cache: Amazon ElastiCache for Redis**
+- **Por que?**: Serviço gerenciado, alta disponibilidade, suporte a cluster mode se necessário.
+- **Uso**: Cache de relatórios consolidados e verificação de idempotência (Idempotency Key).
 
 ## 4. Segurança & Networking
 
@@ -50,5 +54,6 @@ Atualmente rodamos RabbitMQ em container.
 | Docker Compose | AWS ECS (Fargate) | Orquestração de Containers |
 | PostgreSQL Container | Amazon RDS for PostgreSQL | Banco de dados gerenciado |
 | RabbitMQ Container | Amazon MQ (RabbitMQ engine) | Broker de Mensagem |
+| Redis Container | Amazon ElastiCache for Redis | Cache e Store distribuído |
 | Blazor Host | S3 + CloudFront (CDN) | Hospedagem estática global |
 | App Settings (env) | AWS Parameter Store | Gestão de Configuração e Segredos |

@@ -1,5 +1,6 @@
 using FluentAssertions;
 using MassTransit;
+using Microsoft.Extensions.Logging;
 using Moq;
 using Verity.CashFlow.API.Application.DTOs;
 using Verity.CashFlow.API.Application.Services;
@@ -13,14 +14,16 @@ public class TransactionServiceTests
 {
     private readonly Mock<ITransactionRepository> _repoMock;
     private readonly Mock<IPublishEndpoint> _publishMock;
+    private readonly Mock<ILogger<TransactionService>> _loggerMock;
     private readonly TransactionService _service;
 
     public TransactionServiceTests()
     {
         _repoMock = new Mock<ITransactionRepository>();
         _publishMock = new Mock<IPublishEndpoint>();
+        _loggerMock = new Mock<ILogger<TransactionService>>();
 
-        _service = new TransactionService(_repoMock.Object, _publishMock.Object);
+        _service = new TransactionService(_repoMock.Object, _publishMock.Object, _loggerMock.Object);
     }
 
     [Fact]

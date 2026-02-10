@@ -1,4 +1,5 @@
 using MassTransit;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Verity.Consolidated.API.Domain;
 using Verity.Consolidated.API.Infrastructure.Data;
@@ -39,7 +40,7 @@ public class TransactionCreatedConsumer : IConsumer<TransactionCreatedEvent>
             await ProcessTransaction(message, date);
         }
         
-        var cacheKey = $"daily_report:{date:yyyy-MM-dd}";
+        var cacheKey = $"daily_report_v2:{date:yyyy-MM-dd}";
         await _cache.RemoveAsync(cacheKey);
         _logger.LogWarning(">>> Cache invalidado para chave: {Key}", cacheKey);
 
@@ -67,4 +68,5 @@ public class TransactionCreatedConsumer : IConsumer<TransactionCreatedEvent>
 
         await _repository.SaveChangesAsync();
         _logger.LogInformation("Saldo atualizado para {Date}. Novo Fechamento: {Balance}", date, dailyBalance.ClosingBalance);
+}
 }

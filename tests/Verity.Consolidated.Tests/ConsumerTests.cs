@@ -1,6 +1,7 @@
 using FluentAssertions;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Verity.Consolidated.API.Domain;
@@ -16,6 +17,7 @@ public class ConsumerTests
     private readonly DailyBalanceRepository _repository;
     private readonly Mock<ILogger<TransactionCreatedConsumer>> _loggerMock;
     private readonly ProcessingStatus _processingStatus;
+    private readonly Mock<IDistributedCache> _cacheMock;
     private readonly TransactionCreatedConsumer _consumer;
 
     public ConsumerTests()
@@ -28,7 +30,8 @@ public class ConsumerTests
         _repository = new DailyBalanceRepository(_dbContext);
         _loggerMock = new Mock<ILogger<TransactionCreatedConsumer>>();
         _processingStatus = new ProcessingStatus();
-        _consumer = new TransactionCreatedConsumer(_repository, _loggerMock.Object, _processingStatus);
+        _cacheMock = new Mock<IDistributedCache>();
+        _consumer = new TransactionCreatedConsumer(_repository, _loggerMock.Object, _processingStatus, _cacheMock.Object);
     }
 
     [Fact]
