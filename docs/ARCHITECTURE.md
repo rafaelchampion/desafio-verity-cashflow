@@ -20,6 +20,7 @@ graph TD
         DB_CashFlow[(PostgreSQL - Fluxo de Caixa)]
         DB_Consolidated[(PostgreSQL - Consolidado)]
 
+        Redis[(Redis - Cache/Idempotência)]
         MessageBroker{RabbitMQ}
     end
 
@@ -31,11 +32,13 @@ graph TD
     Keycloak -->|Valida Token JWT| CashFlowAPI
     Keycloak -->|Valida Token JWT| ConsolidatedAPI
     CashFlowAPI --> DB_CashFlow
+    CashFlowAPI -->|Verifica Idempotência| Redis
     CashFlowAPI -->|Publica TransactionCreated| MessageBroker
 
     MessageBroker -->|Consome TransactionCreated| Worker
     Worker -->|Atualiza Saldo| DB_Consolidated
-    ConsolidatedAPI -->|Lê Saldo| DB_Consolidated
+    ConsolidatedAPI -->|Lê Saldo (Cache Miss)| DB_Consolidated
+    ConsolidatedAPI -->|Lê Cache| Redis
 ```
 
 ## Padrões Adotados
@@ -51,7 +54,7 @@ Cada serviço possui sua própria camada de Domínio, isolada e pura.
 ### 2. SOLID & Clean Code
 - Injeção de Dependência.
 - Single Responsibility Principle em todas as classes.
-- Código auto-explicativo, com nomes de métodos e variáveis semânticos.
+- Validação de DTOs com `EnumDataType`.
 
 ### 3. Event-Driven Architecture (EDA)
 - Comunicação assíncrona entre o serviço Transacional (`CashFlow`) e o Relatório (`Consolidated`) para garantir que o lançamento nunca falhe se o relatório estiver fora do ar.
@@ -63,5 +66,8 @@ Cada serviço possui sua própria camada de Domínio, isolada e pura.
 - **ORM**: Entity Framework Core (Code First).
 - **Mensageria**: MassTransit (Abstração robusta sobre RabbitMQ).
 - **Frontend**: Blazor WebAssembly para SPA rica e performática em C#.
-- **Banco de Dados**: PostgreSQL (containers isolados ou schemas separados).
-- **Testes**: xUnit + Moq + FluentAssertions.
+- **Banco de Dados**: PostgreSQL.
+- **Cache Distribuído**: Redis (Cache-Aside em Reports e Idempotency Key Store).
+- **Resiliência HTTP**: Polly (Retry e Circuit Breaker) no Frontend.
+- **Observabilidade**: Serilog (Logs Estruturados) e Health Checks (DB, Redis, RabbitMQ, Lag).
+- **Testes**: xUnit + Moq + FluentAssertions + Teste de Carga Customizado.

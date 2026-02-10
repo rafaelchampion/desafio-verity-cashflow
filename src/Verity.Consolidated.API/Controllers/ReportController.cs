@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Distributed;
 using System.Text.Json;
 using Verity.Consolidated.API.Domain;
+using Verity.Consolidated.API.DTOs;
 using Verity.Consolidated.API.Infrastructure.Data;
 
 namespace Verity.Consolidated.API.Controllers;
@@ -22,16 +23,16 @@ public class ReportController : ControllerBase
     }
 
     [HttpGet("daily")]
-    public async Task<ActionResult<DailyBalance>> GetDailyReport([FromQuery] DateTime date)
+    public async Task<ActionResult<DailyBalanceDto>> GetDailyReport([FromQuery] DateTime date)
     {
         Response.Headers.Append("X-Server-Name", Environment.MachineName);
-        var cacheKey = $"daily_report:{date.Date:yyyy-MM-dd}";
+        var cacheKey = $"daily_report_v2:{date.Date:yyyy-MM-dd}";
         var cached = await _cache.GetStringAsync(cacheKey);
         
         if (!string.IsNullOrEmpty(cached))
         {
              Console.WriteLine($"[ReportController] Retornando dados em cache para {date.Date}: {cached}");
-             return Ok(JsonSerializer.Deserialize<DailyBalance>(cached));
+             return Ok(JsonSerializer.Deserialize<DailyBalanceDto>(cached));
         }
 
         var report = await _repository.GetByDateReadOnlyAsync(date.Date);
@@ -41,15 +42,24 @@ public class ReportController : ControllerBase
             return NotFound("Nenhum dado consolidado para esta data.");
         }
 
+        var dto = new DailyBalanceDto
+        {
+            Id = report.Id,
+            Date = report.Date,
+            TotalCredit = report.TotalCredit,
+            TotalDebit = report.TotalDebit,
+            ClosingBalance = report.ClosingBalance
+        };
+
         var options = new DistributedCacheEntryOptions
         {
             AbsoluteExpirationRelativeToNow = date.Date < DateTime.UtcNow.Date ? TimeSpan.FromHours(1) : TimeSpan.FromMinutes(1)
         };
         
-        var json = JsonSerializer.Serialize(report);
+        var json = JsonSerializer.Serialize(dto);
         Console.WriteLine($"[ReportController] Retornando dados do banco de dados para {date.Date}: {json}");
         await _cache.SetStringAsync(cacheKey, json, options);
 
-        return Ok(report);
+        return Ok(dto);
     }
 }

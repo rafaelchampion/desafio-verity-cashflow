@@ -9,8 +9,11 @@ Solução completa para gestão de fluxo de caixa diário, demonstrando arquitet
 - **Entity Framework Core**
 - **MassTransit** (Mensageria)
 - **PostgreSQL**
+- **Redis** (Cache e Idempotência)
 - **RabbitMQ**
 - **Docker & Docker Compose**
+- **Serilog** (Logs Distribuídos)
+- **Polly** (Resiliência e Circuit Breaker)
 
 ## Arquitetura
 
@@ -57,10 +60,19 @@ Para executar os testes automatizados (Unitários e Integração):
 dotnet test
 ```
 
+Para executar o teste de carga personalizado (simula 50 RPS):
+
+```bash
+cd tests/Verity.LoadTests
+dotnet run
+```
+
 ## Funcionalidades
 
 - [x] Autenticação (Login/Registro).
 - [x] Lançamento de Débitos e Créditos.
-- [x] Relatório de Saldo Diário Consolidado.
-- [x] Resiliência: O sistema de lançamentos continua funcionando mesmo se o consolidador cair.
-- [x] Idempotência: Implementação do padrão Inbox/Outbox no consumidor de eventos para garantir processamento "Exactly Once" e evitar duplicidade de saldos.
+- [x] Relatório de Saldo Diário Consolidado (com Cache Redis).
+- [x] Resiliência: O sistema de lançamentos continua funcionando mesmo se o consolidador cair. Implementação de Circuit Breaker e Retry no Frontend com Polly.
+- [x] Idempotência: Verificação de idempotência na API de CashFlow (Redis + Idempotency-Key) e padrão Inbox/Outbox no consumidor.
+- [x] Monitoramento: Health Checks para Banco de Dados, Redis, RabbitMQ e monitoramento de Lag de consumo de eventos.
+- [x] Logs Distribuídos: Configuração de Serilog com contexto enriquecido.
