@@ -7,16 +7,38 @@ using Verity.CashFlow.API.Domain;
 using Verity.CashFlow.API.Domain.Interfaces;
 using Verity.CashFlow.API.Infrastructure.Data;
 using Verity.Core.Domain;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseSerilog((context, configuration) =>
+    configuration
+        .WriteTo.Console()
+        .Enrich.FromLogContext());
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddHealthChecks()
+    .AddNpgSql(builder.Configuration.GetConnectionString("DefaultConnection")!)
+    .AddRabbitMQ(
+        rabbitConnectionString: builder.Configuration.GetConnectionString("RabbitMq")!,
+        name: null,
+        tags: null,
+        timeout: null
+    )
+    .AddRedis(builder.Configuration.GetConnectionString("Redis")!);
+
 builder.Services.AddDbContext<CashFlowDbContext>(options =>
 {
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
+});
+
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = builder.Configuration.GetConnectionString("Redis");
+    options.InstanceName = "CashFlow_";
 });
 
 builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
@@ -104,6 +126,7 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
+app.MapHealthChecks("/health");
 app.MapControllers();
 
 app.Run();

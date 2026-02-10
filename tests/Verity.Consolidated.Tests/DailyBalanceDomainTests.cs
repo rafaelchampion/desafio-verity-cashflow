@@ -9,13 +9,13 @@ public class DailyBalanceDomainTests
     public void Constructor_ShouldInitializeWithZeroValues()
     {
         // Arrange
-        var date = DateTime.Now;
+        var date = DateTime.UtcNow;
 
         // Act
         var sut = new DailyBalance(date);
 
         // Assert
-        sut.Date.Should().Be(date.Date.ToUniversalTime());
+        sut.Date.Should().Be(DateTime.SpecifyKind(date.Date, DateTimeKind.Utc));
         sut.TotalCredit.Should().Be(0);
         sut.TotalDebit.Should().Be(0);
         sut.ClosingBalance.Should().Be(0);

@@ -39,6 +39,20 @@ services:
       timeout: 10s
       retries: 5
 
+  redis:
+    image: redis:alpine
+    container_name: verity_redis
+    ports:
+      - "6379:6379"
+    networks:
+      - verity-network
+    restart: always
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
   cashflow:
     build:
       context: .
@@ -49,11 +63,14 @@ services:
     environment:
       - ConnectionStrings__DefaultConnection=Host=verity_postgres;Port=5432;Database=verity_cashflow;Username=admin;Password=Verity@123
       - ConnectionStrings__RabbitMq=amqp://guest:guest@verity_rabbitmq:5672
+      - ConnectionStrings__Redis=verity_redis:6379
       - Jwt__Key=Verity_CashFlow_Challenge_Secret_Key_For_Jwt_Token_Generation_Must_Be_Long_Enough
     depends_on:
       postgres:
         condition: service_healthy
       rabbitmq:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     networks:
       - verity-network
@@ -68,12 +85,15 @@ services:
     environment:
       - ConnectionStrings__DefaultConnection=Host=verity_postgres;Port=5432;Database=verity_consolidated;Username=admin;Password=Verity@123
       - ConnectionStrings__RabbitMq=amqp://guest:guest@verity_rabbitmq:5672
+      - ConnectionStrings__Redis=verity_redis:6379
       - Jwt__Key=Verity_CashFlow_Challenge_Secret_Key_For_Jwt_Token_Generation_Must_Be_Long_Enough
       - Jwt__Authority=http://verity_keycloak:8080/realms/verity
     depends_on:
       postgres:
         condition: service_healthy
       rabbitmq:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     networks:
       - verity-network

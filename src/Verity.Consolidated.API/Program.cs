@@ -4,19 +4,38 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Verity.Consolidated.API.Infrastructure.Data;
 using Verity.Consolidated.API.Infrastructure.Messaging;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseSerilog((context, configuration) =>
+    configuration
+        .WriteTo.Console()
+        .Enrich.FromLogContext());
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.AddHealthChecks()
+    .AddNpgSql(builder.Configuration.GetConnectionString("DefaultConnection")!)
+    .AddRabbitMQ(rabbitConnectionString: builder.Configuration.GetConnectionString("RabbitMq")!)
+    .AddRedis(builder.Configuration.GetConnectionString("Redis")!)
+    .AddCheck<LagHealthCheck>("LagCheck");
 
 builder.Services.AddDbContext<ConsolidatedDbContext>(options =>
 {
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
 
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = builder.Configuration.GetConnectionString("Redis");
+    options.InstanceName = "Consolidated_";
+});
+
 builder.Services.AddScoped<DailyBalanceRepository>();
+builder.Services.AddSingleton<ProcessingStatus>();
 
 builder.Services.AddMassTransit(x =>
 {
@@ -103,6 +122,7 @@ using (var scope = app.Services.CreateScope())
     catch (Exception) { }
 }
 
+app.MapHealthChecks("/health");
 app.MapControllers();
 
 app.Run();

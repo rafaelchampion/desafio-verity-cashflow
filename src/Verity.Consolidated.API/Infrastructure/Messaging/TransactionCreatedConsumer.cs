@@ -9,11 +9,13 @@ public class TransactionCreatedConsumer : IConsumer<TransactionCreatedEvent>
 {
     private readonly DailyBalanceRepository _repository;
     private readonly ILogger<TransactionCreatedConsumer> _logger;
+    private readonly ProcessingStatus _status;
 
-    public TransactionCreatedConsumer(DailyBalanceRepository repository, ILogger<TransactionCreatedConsumer> logger)
+    public TransactionCreatedConsumer(DailyBalanceRepository repository, ILogger<TransactionCreatedConsumer> logger, ProcessingStatus status)
     {
         _repository = repository;
         _logger = logger;
+        _status = status;
     }
 
     public async Task Consume(ConsumeContext<TransactionCreatedEvent> context)
@@ -42,6 +44,7 @@ public class TransactionCreatedConsumer : IConsumer<TransactionCreatedEvent>
 
         await _repository.SaveChangesAsync();
 
+        _status.LastProcessedTime = DateTime.UtcNow;
         _logger.LogInformation("Saldo atualizado para {Date}. Novo Fechamento: {Balance}", date, dailyBalance.ClosingBalance);
     }
 }

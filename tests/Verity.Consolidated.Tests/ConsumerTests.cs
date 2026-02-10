@@ -15,6 +15,7 @@ public class ConsumerTests
     private readonly ConsolidatedDbContext _dbContext;
     private readonly DailyBalanceRepository _repository;
     private readonly Mock<ILogger<TransactionCreatedConsumer>> _loggerMock;
+    private readonly ProcessingStatus _processingStatus;
     private readonly TransactionCreatedConsumer _consumer;
 
     public ConsumerTests()
@@ -26,7 +27,8 @@ public class ConsumerTests
         _dbContext = new ConsolidatedDbContext(options);
         _repository = new DailyBalanceRepository(_dbContext);
         _loggerMock = new Mock<ILogger<TransactionCreatedConsumer>>();
-        _consumer = new TransactionCreatedConsumer(_repository, _loggerMock.Object);
+        _processingStatus = new ProcessingStatus();
+        _consumer = new TransactionCreatedConsumer(_repository, _loggerMock.Object, _processingStatus);
     }
 
     [Fact]
