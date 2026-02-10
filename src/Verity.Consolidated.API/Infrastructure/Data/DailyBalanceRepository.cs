@@ -49,4 +49,8 @@ public class DailyBalanceRepository : IRepository<DailyBalance>
     {
         await _context.SaveChangesAsync(ct);
     }
+    public void ChangeTrackerClear()
+    {
+        _context.ChangeTracker.Clear();
+    }
 }

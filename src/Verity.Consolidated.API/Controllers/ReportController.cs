@@ -24,17 +24,20 @@ public class ReportController : ControllerBase
     [HttpGet("daily")]
     public async Task<ActionResult<DailyBalance>> GetDailyReport([FromQuery] DateTime date)
     {
+        Response.Headers.Append("X-Server-Name", Environment.MachineName);
         var cacheKey = $"daily_report:{date.Date:yyyy-MM-dd}";
         var cached = await _cache.GetStringAsync(cacheKey);
         
         if (!string.IsNullOrEmpty(cached))
         {
+             Console.WriteLine($"[ReportController] Retornando dados em cache para {date.Date}: {cached}");
              return Ok(JsonSerializer.Deserialize<DailyBalance>(cached));
         }
 
         var report = await _repository.GetByDateReadOnlyAsync(date.Date);
         if (report == null)
         {
+            Console.WriteLine($"[ReportController] Nenhum dado consolidado para esta data: {date.Date}");
             return NotFound("Nenhum dado consolidado para esta data.");
         }
 
@@ -43,7 +46,9 @@ public class ReportController : ControllerBase
             AbsoluteExpirationRelativeToNow = date.Date < DateTime.UtcNow.Date ? TimeSpan.FromHours(1) : TimeSpan.FromMinutes(1)
         };
         
-        await _cache.SetStringAsync(cacheKey, JsonSerializer.Serialize(report), options);
+        var json = JsonSerializer.Serialize(report);
+        Console.WriteLine($"[ReportController] Retornando dados do banco de dados para {date.Date}: {json}");
+        await _cache.SetStringAsync(cacheKey, json, options);
 
         return Ok(report);
     }

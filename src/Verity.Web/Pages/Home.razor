@@ -86,7 +86,7 @@ else
         try
         {
             var client = HttpClientFactory.CreateClient("ConsolidatedAPI");
-            var reportResponse = await client.GetAsync($"api/report/daily?date={DateTime.Now:yyyy-MM-dd}");
+            var reportResponse = await client.GetAsync($"api/report/daily?date={DateTime.UtcNow:yyyy-MM-dd}");
             if (reportResponse.IsSuccessStatusCode)
             {
                 dailyBalance = await reportResponse.Content.ReadFromJsonAsync<DailyBalanceDto>();
@@ -108,8 +108,13 @@ else
 
     public class DailyBalanceDto
     {
+        [System.Text.Json.Serialization.JsonPropertyName("TotalCredit")]
         public decimal TotalCredit { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("TotalDebit")]
         public decimal TotalDebit { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("ClosingBalance")]
         public decimal ClosingBalance { get; set; }
     }
 }

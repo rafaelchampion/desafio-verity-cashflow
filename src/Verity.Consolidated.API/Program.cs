@@ -53,12 +53,13 @@ builder.Services.AddMassTransit(x =>
     {
         cfg.Host(builder.Configuration.GetConnectionString("RabbitMq") ?? "amqp://guest:guest@localhost:5672");
 
-        cfg.ReceiveEndpoint("transaction-created-event", e =>
+        cfg.ConfigureJsonSerializerOptions(options =>
         {
-            e.ConfigureConsumer<TransactionCreatedConsumer>(context);
-            e.UseEntityFrameworkOutbox<ConsolidatedDbContext>(context);
-            e.UseMessageRetry(r => r.Interval(5, TimeSpan.FromMilliseconds(200)));
+            options.PropertyNameCaseInsensitive = true;
+            return options;
         });
+
+        cfg.ConfigureEndpoints(context);
     });
 });
 
@@ -118,8 +119,12 @@ using (var scope = app.Services.CreateScope())
     try
     {
         context.Database.Migrate();
+        context.Database.ExecuteSqlRaw("CREATE UNIQUE INDEX IF NOT EXISTS \"IX_DailyBalances_Date\" ON \"DailyBalances\" (\"Date\");");
     }
-    catch (Exception) { }
+    catch (Exception ex) 
+    { 
+        Console.WriteLine($"[Init] Erro ao migrar banco de dados: {ex.Message}");
+    }
 }
 
 app.MapHealthChecks("/health");

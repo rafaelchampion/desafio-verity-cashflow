@@ -10,11 +10,13 @@ public class TransactionService
 {
     private readonly ITransactionRepository _repository;
     private readonly IPublishEndpoint _publishEndpoint;
+    private readonly ILogger<TransactionService> _logger;
 
-    public TransactionService(ITransactionRepository repository, IPublishEndpoint publishEndpoint)
+    public TransactionService(ITransactionRepository repository, IPublishEndpoint publishEndpoint, ILogger<TransactionService> logger)
     {
         _repository = repository;
         _publishEndpoint = publishEndpoint;
+        _logger = logger;
     }
 
     public async Task<TransactionResponse> CreateTransactionAsync(CreateTransactionRequest request, string userId)
@@ -22,6 +24,8 @@ public class TransactionService
         var transaction = Transaction.Create(request.Amount, request.Type, request.Description, userId);
 
         await _repository.AddAsync(transaction);
+
+        _logger.LogWarning(">>> [PRODUCER] Publicando evento TransactionCreatedEvent: Id={Id}, Amount={Amount}", transaction.Id, transaction.Amount);
         
         await _publishEndpoint.Publish(new TransactionCreatedEvent(
             transaction.Id,
