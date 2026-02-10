@@ -7,7 +7,7 @@ A solução adota uma arquitetura de **Microsserviços** baseada em eventos (Eve
 ## Diagrama de Componentes (C4 Model - Container Level Simplificado)
 
 ```mermaid
-graph TD
+flowchart TD
     User((Usuário))
     Client[Frontend Blazor WebAssembly]
 
@@ -37,7 +37,7 @@ graph TD
 
     MessageBroker -->|Consome TransactionCreated| Worker
     Worker -->|Atualiza Saldo| DB_Consolidated
-    ConsolidatedAPI -->|Lê Saldo (Cache Miss)| DB_Consolidated
+    ConsolidatedAPI -->|Lê Saldo - Cache Miss| DB_Consolidated
     ConsolidatedAPI -->|Lê Cache| Redis
 ```
 
