@@ -95,8 +95,6 @@ yarn.lock
 # Project specific ignores
 verification/
 published_web/
-src/Verity.Web/wwwroot/lib/
-src/Verity.Web/wwwroot/css/
 src/Verity.Web/wwwroot/icon-192.png
 src/Verity.Web/wwwroot/favicon.png
 
